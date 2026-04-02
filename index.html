@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="سودوكو">
+<meta name="theme-color" content="#185FA5">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>سودوكو</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f4f4f0;color:#1a1a1a;direction:rtl;min-height:100vh}
+  #app{padding:1rem;max-width:480px;margin:0 auto}
+  .screen{display:none}.screen.active{display:block}
+  h1{font-size:28px;font-weight:600;text-align:center;margin-bottom:1.5rem;color:#1a1a1a;letter-spacing:-0.5px}
+  h1 span{color:#185FA5}
+  .card{background:#fff;border-radius:16px;padding:1.25rem;margin-bottom:1rem;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+  input[type=text]{width:100%;font-size:16px;padding:12px 14px;border-radius:10px;border:1.5px solid #ddd;background:#fafafa;color:#1a1a1a;margin-bottom:1rem;direction:rtl;outline:none}
+  input[type=text]:focus{border-color:#185FA5}
+  .btn{display:inline-block;padding:12px 20px;border-radius:10px;border:1.5px solid #ddd;background:#fff;color:#1a1a1a;cursor:pointer;font-size:15px;font-weight:500;transition:all .15s;width:100%}
+  .btn:active{transform:scale(0.97)}
+  .btn-primary{background:#185FA5;color:#fff;border-color:#185FA5}
+  .btn-primary:active{background:#0C447C}
+  .btn-danger{background:#A32D2D;color:#fff;border-color:#A32D2D}
+  .level-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:1rem}
+  .level-btn{padding:12px 8px;text-align:center;border-radius:10px;border:1.5px solid #ddd;cursor:pointer;font-size:14px;font-weight:500;color:#555;background:#fafafa;transition:all .15s}
+  .level-btn:active{transform:scale(0.96)}
+  .level-btn.sel{background:#185FA5;color:#fff;border-color:#185FA5}
+  .top-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem}
+  .player-tag{font-size:14px;font-weight:500;color:#333}
+  .level-badge{font-size:11px;padding:3px 10px;border-radius:20px;background:#dbeeff;color:#185FA5;font-weight:500}
+  .stats-row{display:flex;gap:8px;margin-bottom:.75rem}
+  .stat{flex:1;background:#fff;border-radius:12px;padding:.65rem;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+  .stat-label{font-size:10px;color:#888;margin-bottom:2px;text-transform:uppercase;letter-spacing:.5px}
+  .stat-val{font-size:19px;font-weight:600;color:#1a1a1a}
+  #board-wrap{display:flex;justify-content:center;margin-bottom:.75rem;position:relative}
+  #sudoku-table{border-collapse:collapse;width:min(360px,94vw);height:min(360px,94vw);direction:ltr;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+  #sudoku-table td{width:11.11%;text-align:center;vertical-align:middle;font-size:clamp(12px,4.5vw,20px);font-weight:500;cursor:pointer;position:relative;padding:0;border:.5px solid #ccc;background:#fff;transition:background .08s;color:#1a1a1a}
+  #sudoku-table td.bb{border-bottom:2.5px solid #333}
+  #sudoku-table td.br{border-right:2.5px solid #333}
+  #sudoku-table{border:2.5px solid #222}
+  .cell-given{color:#185FA5!important;font-weight:600!important}
+  .cell-user{color:#2d7a2d!important}
+  .cell-error{color:#cc2222!important}
+  .cell-sel{background:#b8d8f5!important}
+  .cell-hl{background:#e8f2fb!important}
+  .cell-hlnum{background:#c8e6a0!important}
+  .draft-grid{display:grid;grid-template-columns:repeat(3,1fr);width:100%;height:100%;position:absolute;inset:0}
+  .draft-num{font-size:clamp(5px,1.2vw,9px);display:flex;align-items:center;justify-content:center;color:#888;font-weight:400}
+  #pause-cover{display:none;position:absolute;inset:0;background:rgba(0,0,0,.6);border-radius:4px;align-items:center;justify-content:center;z-index:10;flex-direction:column;gap:8px}
+  #pause-cover.show{display:flex}
+  #pause-cover span{font-size:44px}
+  #pause-cover p{color:#fff;font-size:16px;font-weight:500}
+  .num-pad{display:grid;grid-template-columns:repeat(9,1fr);gap:4px;margin-bottom:.75rem}
+  .num-btn{padding:10px 2px;border-radius:8px;border:1.5px solid #ddd;background:#fff;color:#1a1a1a;cursor:pointer;font-size:18px;font-weight:600;text-align:center;transition:all .15s;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+  .num-btn:active{transform:scale(0.92);background:#dbeeff}
+  .num-btn.done{opacity:.12;cursor:default;pointer-events:none;box-shadow:none}
+  .action-row{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin-bottom:.75rem}
+  .action-btn{padding:9px 2px;border-radius:8px;border:1.5px solid #ddd;background:#fff;color:#333;cursor:pointer;font-size:11px;text-align:center;transition:all .15s;box-shadow:0 1px 3px rgba(0,0,0,.06);line-height:1.4}
+  .action-btn:active{transform:scale(0.94);background:#eee}
+  .action-btn.on{background:#c8e6a0;border-color:#5a9e2f;color:#2d5a10}
+  .action-btn.pause-on{background:#fde8a0;border-color:#c49a00;color:#7a5c00}
+  .action-btn.end-btn{color:#cc2222;border-color:#f0c0c0}
+  #msg{min-height:22px;text-align:center;font-size:13px;color:#666;margin-bottom:.25rem}
+  .err-dot{width:13px;height:13px;border-radius:50%;background:#ddd;display:inline-block;margin:0 2px}
+  .err-dot.used{background:#cc2222}
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:99;padding:1rem}
+  .dialog{background:#fff;border-radius:18px;padding:2rem 1.5rem;text-align:center;max-width:300px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,.2)}
+  .dialog-icon{font-size:52px;margin-bottom:.5rem}
+  .dialog h2{font-size:20px;font-weight:600;margin-bottom:.5rem;color:#1a1a1a}
+  .dialog p{font-size:14px;color:#666;margin-bottom:1.25rem;white-space:pre-line;line-height:1.6}
+  .dialog-btns{display:flex;flex-direction:column;gap:.5rem}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="s-name" class="screen active">
+    <h1>سودو<span>كو</span></h1>
+    <div class="card">
+      <p style="font-size:14px;color:#888;margin-bottom:.75rem">أدخل اسمك واختر المستوى</p>
+      <input type="text" id="name-inp" placeholder="اسمك هنا..." maxlength="20">
+      <div class="level-grid">
+        <div class="level-btn sel" data-lvl="easy">😊 سهل</div>
+        <div class="level-btn" data-lvl="medium">🤔 متوسط</div>
+        <div class="level-btn" data-lvl="hard">🔥 صعب</div>
+      </div>
+      <button class="btn btn-primary" onclick="startGame()">ابدأ اللعبة ←</button>
+    </div>
+  </div>
+
+  <div id="s-game" class="screen">
+    <div class="top-bar">
+      <span class="player-tag" id="player-name"></span>
+      <span class="level-badge" id="level-badge"></span>
+    </div>
+    <div class="stats-row">
+      <div class="stat"><div class="stat-label">النقاط</div><div class="stat-val" id="score-val">0</div></div>
+      <div class="stat"><div class="stat-label">الوقت</div><div class="stat-val" id="time-val">00:00</div></div>
+      <div class="stat"><div class="stat-label">الأخطاء</div><div class="stat-val" id="err-dots"></div></div>
+    </div>
+    <div id="board-wrap">
+      <table id="sudoku-table"><tbody id="tbody"></tbody></table>
+      <div id="pause-cover"><span>⏸</span><p>اللعبة متوقفة</p></div>
+    </div>
+    <div class="num-pad" id="num-pad"></div>
+    <div class="action-row">
+      <div class="action-btn" id="btn-draft" onclick="toggleDraft()">✏️<br>مسودة</div>
+      <div class="action-btn" onclick="useHint()">💡<br>تلميح</div>
+      <div class="action-btn" onclick="clearCell()">🗑️<br>حذف</div>
+      <div class="action-btn" id="btn-pause" onclick="togglePause()">⏸<br>إيقاف</div>
+      <div class="action-btn end-btn" onclick="confirmEnd()">🏳️<br>إنهاء</div>
+    </div>
+    <div id="msg"></div>
+  </div>
+</div>
+
+<div id="overlay" class="overlay" style="display:none">
+  <div class="dialog">
+    <div class="dialog-icon" id="dlg-icon"></div>
+    <h2 id="dlg-title"></h2>
+    <p id="dlg-body"></p>
+    <div class="dialog-btns" id="dlg-btns"></div>
+  </div>
+</div>
+
+<script>
+const REMOVES={easy:35,medium:48,hard:58};
+const LVLNAME={easy:'سهل 😊',medium:'متوسط 🤔',hard:'صعب 🔥'};
+const PTS={easy:10,medium:15,hard:20};
+let S={name:'',level:'easy',puzzle:[],solution:[],userGrid:[],draftGrid:[],
+  sel:-1,score:0,errors:0,hints:3,timer:0,tid:null,draft:false,done:false,paused:false};
+const $=id=>document.getElementById(id);
+
+document.querySelectorAll('.level-btn').forEach(b=>{
+  b.onclick=()=>{document.querySelectorAll('.level-btn').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');S.level=b.dataset.lvl;};
+});
+
+function startGame(){const n=$('name-inp').value.trim();if(!n){$('name-inp').focus();return;}S.name=n;newGame();document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));$('s-game').classList.add('active');}
+
+function newGame(){
+  clearInterval(S.tid);
+  S={...S,sel:-1,score:0,errors:0,hints:3,timer:0,done:false,draft:false,paused:false};
+  genPuzzle();buildTable();renderPad();updateStats();
+  $('btn-draft').classList.remove('on');$('btn-pause').classList.remove('pause-on');
+  $('btn-pause').innerHTML='⏸<br>إيقاف';$('pause-cover').classList.remove('show');
+  $('msg').textContent='';$('player-name').textContent='👤 '+S.name;$('level-badge').textContent=LVLNAME[S.level];
+  S.tid=setInterval(()=>{if(!S.done&&!S.paused){S.timer++;$('time-val').textContent=fmt(S.timer);}},1000);
+}
+
+function togglePause(){
+  if(S.done)return;S.paused=!S.paused;
+  $('pause-cover').classList.toggle('show',S.paused);$('btn-pause').classList.toggle('pause-on',S.paused);
+  $('btn-pause').innerHTML=S.paused?'▶<br>استمرار':'⏸<br>إيقاف';
+  if(S.paused)S.sel=-1;else paintCells();
+}
+
+function confirmEnd(){
+  if(S.done)return;const wasPaused=S.paused;if(!S.paused)togglePause();
+  showDlg('🏳️','إنهاء اللعبة؟','هل أنت متأكد أنك تريد إنهاء اللعبة الحالية؟',[
+    {label:'نعم، إنهاء',cls:'btn btn-danger',fn:()=>{hideOverlay();endGame(false,true);}},
+    {label:'تراجع',cls:'btn',fn:()=>{hideOverlay();if(!wasPaused&&S.paused)togglePause();}}
+  ]);
+}
+
+function genPuzzle(){
+  const sol=Array.from({length:9},()=>Array(9).fill(0));fill(sol);
+  S.solution=sol.map(r=>[...r]);const p=sol.map(r=>[...r]);
+  let rem=REMOVES[S.level],t=0;
+  while(rem>0&&t<500){const r=Math.random()*9|0,c=Math.random()*9|0;if(p[r][c]!==0){p[r][c]=0;rem--;}t++;}
+  S.puzzle=p.map(r=>[...r]);S.userGrid=p.map(r=>[...r]);
+  S.draftGrid=Array.from({length:9},()=>Array.from({length:9},()=>new Set()));
+}
+
+function fill(g){
+  for(let i=0;i<81;i++){const r=i/9|0,c=i%9;if(g[r][c]===0){const ns=shuf([1,2,3,4,5,6,7,8,9]);for(const n of ns){if(ok(g,r,c,n)){g[r][c]=n;if(fill(g))return true;g[r][c]=0;}}return false;}}return true;
+}
+function ok(g,r,c,n){for(let i=0;i<9;i++)if(g[r][i]===n||g[i][c]===n)return false;const br=(r/3|0)*3,bc=(c/3|0)*3;for(let i=0;i<3;i++)for(let j=0;j<3;j++)if(g[br+i][bc+j]===n)return false;return true;}
+function shuf(a){for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+function buildTable(){
+  const tb=$('tbody');tb.innerHTML='';
+  for(let r=0;r<9;r++){const tr=document.createElement('tr');for(let c=0;c<9;c++){const td=document.createElement('td');td.dataset.r=r;td.dataset.c=c;if(r===2||r===5)td.classList.add('bb');if(c===2||c===5)td.classList.add('br');td.onclick=()=>selectCell(r,c);tr.appendChild(td);}tb.appendChild(tr);}
+  paintCells();
+}
+
+function getCell(r,c){return $('tbody').rows[r].cells[c];}
+
+function paintCells(){
+  for(let r=0;r<9;r++){for(let c=0;c<9;c++){
+    const td=getCell(r,c),given=S.puzzle[r][c]!==0,val=S.userGrid[r][c],drafts=S.draftGrid[r][c];
+    td.classList.remove('cell-given','cell-user','cell-error','cell-sel','cell-hl','cell-hlnum');td.innerHTML='';
+    if(given){td.classList.add('cell-given');td.textContent=val;}
+    else if(val!==0){td.classList.add(val===S.solution[r][c]?'cell-user':'cell-error');td.textContent=val;}
+    else if(drafts.size>0){const dg=document.createElement('div');dg.className='draft-grid';for(let n=1;n<=9;n++){const dn=document.createElement('div');dn.className='draft-num';dn.textContent=drafts.has(n)?n:'';dg.appendChild(dn);}td.appendChild(dg);}
+  }}
+  applyHL();updatePad();
+}
+
+function applyHL(){
+  if(S.sel<0)return;const sr=S.sel/9|0,sc=S.sel%9,selVal=S.userGrid[sr][sc];
+  for(let r=0;r<9;r++){for(let c=0;c<9;c++){const td=getCell(r,c);if(r===sr&&c===sc){td.classList.add('cell-sel');continue;}const sb=(r/3|0)===(sr/3|0)&&(c/3|0)===(sc/3|0);if(r===sr||c===sc||sb)td.classList.add('cell-hl');if(selVal!==0&&S.userGrid[r][c]===selVal)td.classList.add('cell-hlnum');}}
+}
+
+function selectCell(r,c){if(S.done||S.paused)return;S.sel=r*9+c;paintCells();}
+function countCorrect(n){let k=0;for(let r=0;r<9;r++)for(let c=0;c<9;c++)if(S.userGrid[r][c]===n&&S.solution[r][c]===n)k++;return k;}
+
+function renderPad(){
+  const p=$('num-pad');p.innerHTML='';
+  for(let n=1;n<=9;n++){const b=document.createElement('div');b.className='num-btn';b.id='nb-'+n;b.textContent=n;b.onclick=()=>inputNum(n);p.appendChild(b);}
+}
+
+function updatePad(){for(let n=1;n<=9;n++){const btn=$('nb-'+n);if(!btn)return;if(countCorrect(n)===9)btn.classList.add('done');else btn.classList.remove('done');}}
+
+function inputNum(n){
+  if(S.done||S.sel<0||S.paused)return;const r=S.sel/9|0,c=S.sel%9;if(S.puzzle[r][c]!==0)return;
+  if(S.draft){S.draftGrid[r][c].has(n)?S.draftGrid[r][c].delete(n):S.draftGrid[r][c].add(n);S.userGrid[r][c]=0;}
+  else{S.draftGrid[r][c].clear();S.userGrid[r][c]=n;if(n!==S.solution[r][c]){S.errors++;setMsg('خطأ! ❌');if(S.errors>=3){endGame(false,false);return;}}else{S.score+=PTS[S.level];setMsg('ممتاز! ✓');checkWin();}}
+  paintCells();updateStats();
+}
+
+function clearCell(){if(S.done||S.sel<0||S.paused)return;const r=S.sel/9|0,c=S.sel%9;if(S.puzzle[r][c]!==0)return;S.userGrid[r][c]=0;S.draftGrid[r][c].clear();paintCells();}
+function toggleDraft(){if(S.paused)return;S.draft=!S.draft;$('btn-draft').classList.toggle('on',S.draft);}
+
+function useHint(){
+  if(S.done||S.paused)return;if(S.hints<=0){setMsg('لا تلميحات متبقية');return;}if(S.sel<0){setMsg('اختر خلية أولاً');return;}
+  const r=S.sel/9|0,c=S.sel%9;if(S.puzzle[r][c]!==0||S.userGrid[r][c]===S.solution[r][c]){setMsg('الخلية محلولة');return;}
+  S.draftGrid[r][c].clear();S.userGrid[r][c]=S.solution[r][c];S.hints--;S.score=Math.max(0,S.score-5);
+  paintCells();updateStats();setMsg('💡 تلميح (تبقى '+S.hints+')');checkWin();
+}
+
+function checkWin(){for(let r=0;r<9;r++)for(let c=0;c<9;c++)if(S.userGrid[r][c]!==S.solution[r][c])return;endGame(true,false);}
+
+function endGame(won,manual){
+  S.done=true;clearInterval(S.tid);S.paused=false;$('pause-cover').classList.remove('show');
+  $('btn-pause').classList.remove('pause-on');$('btn-pause').innerHTML='⏸<br>إيقاف';
+  if(won)S.score+=Math.max(0,300-S.timer)*2;
+  const icon=won?'🎉':manual?'🏳️':'💔';
+  const title=won?'مبروك '+S.name+'!':manual?'انتهت اللعبة':'انتهت اللعبة!';
+  const body=won?`حللت في ${fmt(S.timer)}\nالنقاط: ${S.score}`:manual?`أنهيت اللعبة مبكراً\nالنقاط: ${S.score}`:`وصلت إلى 3 أخطاء!\nالنقاط: ${S.score}`;
+  showDlg(icon,title,body,[
+    {label:'العب مجدداً',cls:'btn btn-primary',fn:()=>{hideOverlay();newGame();}},
+    {label:'تغيير المستوى',cls:'btn',fn:()=>{hideOverlay();clearInterval(S.tid);document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));$('s-name').classList.add('active');}}
+  ]);
+  updateStats();
+}
+
+function showDlg(ic,ti,bo,btns){
+  $('dlg-icon').textContent=ic;$('dlg-title').textContent=ti;$('dlg-body').textContent=bo;
+  const bc=$('dlg-btns');bc.innerHTML='';
+  btns.forEach(b=>{const el=document.createElement('button');el.className=b.cls;el.textContent=b.label;el.style.width='100%';el.onclick=b.fn;bc.appendChild(el);});
+  $('overlay').style.display='flex';
+}
+
+function hideOverlay(){$('overlay').style.display='none';}
+
+function updateStats(){
+  $('score-val').textContent=S.score;
+  const d=$('err-dots');d.innerHTML='';
+  for(let i=0;i<3;i++){const dot=document.createElement('span');dot.className='err-dot'+(i<S.errors?' used':'');d.appendChild(dot);}
+}
+
+function setMsg(t){$('msg').textContent=t;setTimeout(()=>$('msg').textContent='',1800);}
+function fmt(s){return String(s/60|0).padStart(2,'0')+':'+String(s%60).padStart(2,'0');}
+
+document.addEventListener('keydown',e=>{
+  if(S.done)return;if(e.key==='Escape'){togglePause();return;}if(S.paused)return;
+  const n=parseInt(e.key);if(n>=1&&n<=9)inputNum(n);
+  else if(e.key==='Backspace'||e.key==='Delete')clearCell();
+  else if(e.key==='ArrowRight'&&S.sel>0){S.sel--;paintCells();}
+  else if(e.key==='ArrowLeft'&&S.sel<80){S.sel++;paintCells();}
+  else if(e.key==='ArrowUp'&&S.sel>=9){S.sel-=9;paintCells();}
+  else if(e.key==='ArrowDown'&&S.sel<72){S.sel+=9;paintCells();}
+});
+
+// Register Service Worker
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('sw.js').then(()=>console.log('SW registered'));
+  });
+}
+</script>
+</body>
+</html>
